@@ -1,0 +1,14 @@
+{
+    "name": "hbgl/php-routing-bench",
+    "require": {
+        "symfony/routing": "^5.2",
+        "mezon/router": "^1.2",
+        "nikic/fast-route": "^1.3"
+    },
+    "require-dev": {
+        "phpbench/phpbench": "^0.17.1"
+    },
+    "scripts": {
+        "bench": "phpbench run bench.php --report=env \"--report=generator:\\\"table\\\",cols:[\\\"subject\\\",\\\"set\\\",\\\"mean\\\",\\\"min\\\",\\\"max\\\",\\\"diff\\\"],sort:{set:\\\"asc\\\",subject:\\\"asc\\\"},break:[\\\"set\\\"]\" --revs=1 --iterations=10 --time-unit=\"milliseconds\""
+    }
+}
