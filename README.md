@@ -3,11 +3,11 @@
 This repo contains benchmarks for two PHP routing libraries:
 
 - [Symfony Routing](https://symfony.com/doc/current/routing.html) both compiled and dynamic mode
-- [FastRoute](https://github.com/nikic/FastRoute) in group count mode
+- [FastRoute](https://github.com/nikic/FastRoute) in group count mode and mark mode
 
 [Symfony Routing](https://symfony.com/doc/current/routing.html) in dynamic mode sequentially matches each route pattern against a URI. In compiled mode it matches static routes via dictionary lookup and dynamic routes with one giant pre-compiled regex.
 
-[FastRoute](https://github.com/nikic/FastRoute) matches batches of 10 to 30 route patterns against a URI.
+[FastRoute](https://github.com/nikic/FastRoute) in group count mode matches batches of 10 to 30 route patterns against a URI. In mark mode it basically works like Symfony's compiled mode.
 
 ## Running the bechmarks
 
@@ -15,7 +15,7 @@ This repo contains benchmarks for two PHP routing libraries:
 composer run bench
 ```
 
-This runs 10 iterations of the benchmarks without a warmup. The URLs are tested against around [300 routes](https://github.com/hbgl/php-routing-bench/blob/main/routes/akaunting.php) which I exported from the open source application [akaunting](https://github.com/akaunting/akaunting). I believe that the set of routes is representative for an medium sized application.
+This runs 10 iterations of the benchmarks after a warmup. The URLs are tested against around [300 routes](https://github.com/hbgl/php-routing-bench/blob/main/routes/akaunting.php) which I exported from the open source application [akaunting](https://github.com/akaunting/akaunting). I believe that the set of routes is representative for an medium sized application.
 
 The following benchmarks are performed:
 
