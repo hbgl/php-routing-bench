@@ -14,7 +14,8 @@ class RouterBench
     const SYMFONY_COMPILED_ROUTES_PATH = __DIR__ . '/.cache/symfony-compiled-routes.php';
 
     private $key;
-    private $fastRouteDispatcher;
+    private $fastRouteDispatcherGroupCount;
+    private $fastRouteDispatcherMark;
     private $symfonyUrlMatcherDynamic;
     private $symfonyUrlMatcherCompiled;
 
@@ -24,25 +25,46 @@ class RouterBench
 
         if ($key !== $this->key) {
             $this->key = $key;
-            $this->initFastRoute();
+            $this->initFastRouteGroupCount();
+            $this->initFastRouteMark();
             $this->initSymfonyDynamic();
             $this->initSymfonyCompiled();
         }
     }
 
-    private function initFastRoute()
+    private function initFastRouteGroupCount()
     {
         global $routePaths;
         $routePathDataset = $routePaths[$this->key];
 
         // Initialize FastRoute
-        $this->fastRouteDispatcher = \FastRoute\simpleDispatcher(function (\FastRoute\RouteCollector $r) use ($routePathDataset) {
+        $this->fastRouteDispatcherGroupCount = \FastRoute\simpleDispatcher(function (\FastRoute\RouteCollector $r) use ($routePathDataset) {
             $i = 0;
             foreach ($routePathDataset as $path) {
                 $r->addRoute('GET', "/$path", "r$i");
                 $i++;
             }
         });
+    }
+
+    private function initFastRouteMark()
+    {
+        global $routePaths;
+        $routePathDataset = $routePaths[$this->key];
+
+        // Initialize FastRoute
+        $this->fastRouteDispatcherMark = \FastRoute\simpleDispatcher(function (\FastRoute\RouteCollector $r) use ($routePathDataset) {
+            $i = 0;
+            foreach ($routePathDataset as $path) {
+                $r->addRoute('GET', "/$path", "r$i");
+                $i++;
+            }
+        }, [
+            'routeParser' => \FastRoute\RouteParser\Std::class,
+            'dataGenerator' => \FastRoute\DataGenerator\MarkBased::class,
+            'dispatcher' => \FastRoute\Dispatcher\MarkBased::class,
+            'routeCollector' => \FastRoute\RouteCollector::class,
+        ]);
     }
 
     private function initSymfonyDynamic()
@@ -88,10 +110,20 @@ class RouterBench
     /**
      * @ParamProviders({"dataProvider"})
      */
-    public function benchFastRoute($args)
+    public function benchFastRouteGroupCount($args)
     {
         $uri = $args[1];
-        $result = $this->fastRouteDispatcher->dispatch('GET', $uri);
+        $result = $this->fastRouteDispatcherGroupCount->dispatch('GET', $uri);
+        return $result;
+    }
+
+    /**
+     * @ParamProviders({"dataProvider"})
+     */
+    public function benchFastRouteMark($args)
+    {
+        $uri = $args[1];
+        $result = $this->fastRouteDispatcherMark->dispatch('GET', $uri);
         return $result;
     }
 

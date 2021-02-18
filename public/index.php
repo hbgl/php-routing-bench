@@ -31,7 +31,8 @@ $paths = [
 ];
 
 $modes = [
-    'FastRoute',
+    'FastRouteGroupCount',
+    'FastRouteMark',
     'SymfonyDynamic',
     'SymfonyCompiled',
 ];
@@ -53,9 +54,11 @@ if (!$isValidMode || !$isValidPath) {
     <ul>
         <?php foreach ($paths as $path => $name): ?>
             <li><?php echo htmlspecialchars($name); ?>
-            <?php foreach ($modes as $mode): ?>
-                &nbsp;&nbsp;<a href="/?<?php echo htmlspecialchars(http_build_query(['path' => $path, 'mode' => $mode])); ?>"><?php echo htmlspecialchars($mode); ?></a>
-            <?php endforeach; ?>
+                <ul>
+                <?php foreach ($modes as $mode): ?>
+                    <li><a href="/?<?php echo htmlspecialchars(http_build_query(['path' => $path, 'mode' => $mode])); ?>"><?php echo htmlspecialchars($mode); ?></a></li>
+                <?php endforeach; ?>
+                </ul>
             </li>
         <?php endforeach; ?>
     </ul>
@@ -108,7 +111,7 @@ if (!$isValidMode || !$isValidPath) {
                         return null;
                     }
                 };
-            } elseif ($mode === 'FastRoute') {
+            } elseif ($mode === 'FastRouteGroupCount') {
                 $fastRouteDispatcher = \FastRoute\simpleDispatcher(function (\FastRoute\RouteCollector $r) use ($routePathDataset) {
                     $i = 0;
                     foreach ($routePathDataset as $path) {
@@ -116,6 +119,22 @@ if (!$isValidMode || !$isValidPath) {
                         $i++;
                     }
                 });
+                return function ($path) use ($fastRouteDispatcher) {
+                    return $fastRouteDispatcher->dispatch('GET', $path);
+                };
+            } elseif ($mode === 'FastRouteMark') {
+                $fastRouteDispatcher = \FastRoute\simpleDispatcher(function (\FastRoute\RouteCollector $r) use ($routePathDataset) {
+                    $i = 0;
+                    foreach ($routePathDataset as $path) {
+                        $r->addRoute('GET', "/$path", "route_$i");
+                        $i++;
+                    }
+                }, [
+                    'routeParser' => 'FastRoute\\RouteParser\\Std',
+                    'dataGenerator' => 'FastRoute\\DataGenerator\\MarkBased',
+                    'dispatcher' => 'FastRoute\\Dispatcher\\MarkBased',
+                    'routeCollector' => 'FastRoute\\RouteCollector',
+                ]);
                 return function ($path) use ($fastRouteDispatcher) {
                     return $fastRouteDispatcher->dispatch('GET', $path);
                 };
