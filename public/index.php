@@ -16,6 +16,8 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+const SYMFONY_COMPILED_ROUTES_PATH = __DIR__ . '/../.cache/symfony-compiled-routes.php';
+
 $iterations = 10;
 
 $paths = [
@@ -30,7 +32,8 @@ $paths = [
 
 $modes = [
     'FastRoute',
-    'Symfony',
+    'SymfonyDynamic',
+    'SymfonyCompiled',
 ];
 
 $mode = $_GET['mode'] ?? null;
@@ -62,7 +65,7 @@ if (!$isValidMode || !$isValidPath) {
         {
             $routePathDataset = require(__DIR__ . '/../routes/akaunting.php');
     
-            if ($mode === 'Symfony') {
+            if ($mode === 'SymfonyDynamic') {
                 // Initialize Symfony
                 $routes = new \Symfony\Component\Routing\RouteCollection();
                 $i = 0;
@@ -72,10 +75,35 @@ if (!$isValidMode || !$isValidPath) {
                     $i++;
                 }
                 $context = new \Symfony\Component\Routing\RequestContext();
-                $symfonyUrlMatcher = new \Symfony\Component\Routing\Matcher\UrlMatcher($routes, $context);
-                return function ($path) use ($symfonyUrlMatcher) {
+                $symfonyUrlMatcherDynamic = new \Symfony\Component\Routing\Matcher\UrlMatcher($routes, $context);
+                return function ($path) use ($symfonyUrlMatcherDynamic) {
                     try {
-                        return $symfonyUrlMatcher->match($path);
+                        return $symfonyUrlMatcherDynamic->match($path);
+                    } catch (\Throwable $t) {
+                        return null;
+                    }
+                };
+            } elseif ($mode === 'SymfonyCompiled') {
+                // Initialize Symfony
+                $routes = new \Symfony\Component\Routing\RouteCollection();
+                $i = 0;
+                foreach ($routePathDataset as $path) {
+                    $route = new \Symfony\Component\Routing\Route("/$path");
+                    $routes->add("r$i", $route);
+                    $i++;
+                }
+                // Compile the url matcher
+                $matcherDumper = new \Symfony\Component\Routing\Matcher\Dumper\CompiledUrlMatcherDumper($routes);
+                $compiledRoutesCode = $matcherDumper->dump();
+                file_put_contents(SYMFONY_COMPILED_ROUTES_PATH, $compiledRoutesCode);
+
+                $compiledRoutes = require SYMFONY_COMPILED_ROUTES_PATH;
+
+                $context = new \Symfony\Component\Routing\RequestContext();
+                $symfonyUrlMatcherCompiled = new \Symfony\Component\Routing\Matcher\CompiledUrlMatcher($compiledRoutes, $context);
+                return function ($path) use ($symfonyUrlMatcherCompiled) {
+                    try {
+                        return $symfonyUrlMatcherCompiled->match($path);
                     } catch (\Throwable $t) {
                         return null;
                     }

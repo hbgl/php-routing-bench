@@ -11,9 +11,12 @@ $routePaths = [
  */
 class RouterBench
 {
+    const SYMFONY_COMPILED_ROUTES_PATH = __DIR__ . '/.cache/symfony-compiled-routes.php';
+
     private $key;
     private $fastRouteDispatcher;
-    private $symfonyUrlMatcher;
+    private $symfonyUrlMatcherDynamic;
+    private $symfonyUrlMatcherCompiled;
 
     public function init($args)
     {
@@ -21,30 +24,65 @@ class RouterBench
 
         if ($key !== $this->key) {
             $this->key = $key;
-        
-            global $routePaths;
-            $routePathDataset = $routePaths[$key];
+            $this->initFastRoute();
+            $this->initSymfonyDynamic();
+            $this->initSymfonyCompiled();
+        }
+    }
 
-            // Initialize FastRoute
-            $this->fastRouteDispatcher = \FastRoute\simpleDispatcher(function (\FastRoute\RouteCollector $r) use ($routePathDataset) {
-                $i = 0;
-                foreach ($routePathDataset as $path) {
-                    $r->addRoute('GET', "/$path", "r$i");
-                    $i++;
-                }
-            });
-        
-            // Initialize Symfony
-            $routes = new \Symfony\Component\Routing\RouteCollection();
+    private function initFastRoute()
+    {
+        global $routePaths;
+        $routePathDataset = $routePaths[$this->key];
+
+        // Initialize FastRoute
+        $this->fastRouteDispatcher = \FastRoute\simpleDispatcher(function (\FastRoute\RouteCollector $r) use ($routePathDataset) {
             $i = 0;
             foreach ($routePathDataset as $path) {
-                $route = new \Symfony\Component\Routing\Route("/$path");
-                $routes->add("r$i", $route);
+                $r->addRoute('GET', "/$path", "r$i");
                 $i++;
             }
-            $context = new \Symfony\Component\Routing\RequestContext();
-            $this->symfonyUrlMatcher = new \Symfony\Component\Routing\Matcher\UrlMatcher($routes, $context);
+        });
+    }
+
+    private function initSymfonyDynamic()
+    {
+        global $routePaths;
+        $routePathDataset = $routePaths[$this->key];
+
+        // Initialize Symfony
+        $routes = new \Symfony\Component\Routing\RouteCollection();
+        $i = 0;
+        foreach ($routePathDataset as $path) {
+            $route = new \Symfony\Component\Routing\Route("/$path");
+            $routes->add("r$i", $route);
+            $i++;
         }
+        $context = new \Symfony\Component\Routing\RequestContext();
+        $this->symfonyUrlMatcherDynamic = new \Symfony\Component\Routing\Matcher\UrlMatcher($routes, $context);
+    }
+
+    private function initSymfonyCompiled()
+    {
+        global $routePaths;
+        $routePathDataset = $routePaths[$this->key];
+        
+        // Initialize Symfony
+        $routes = new \Symfony\Component\Routing\RouteCollection();
+        $i = 0;
+        foreach ($routePathDataset as $path) {
+            $route = new \Symfony\Component\Routing\Route("/$path");
+            $routes->add("r$i", $route);
+            $i++;
+        }
+        // Compile the url matcher
+        $matcherDumper = new \Symfony\Component\Routing\Matcher\Dumper\CompiledUrlMatcherDumper($routes);
+        $compiledRoutesCode = $matcherDumper->dump();
+        file_put_contents(self::SYMFONY_COMPILED_ROUTES_PATH, $compiledRoutesCode);
+
+        $compiledRoutes = require self::SYMFONY_COMPILED_ROUTES_PATH;
+        $context = new \Symfony\Component\Routing\RequestContext();
+        $this->symfonyUrlMatcherCompiled = new \Symfony\Component\Routing\Matcher\CompiledUrlMatcher($compiledRoutes, $context);
     }
 
     /**
@@ -60,11 +98,25 @@ class RouterBench
     /**
      * @ParamProviders({"dataProvider"})
      */
-    public function benchSymfony($args)
+    public function benchSymfonyDynamic($args)
     {
         $uri = $args[1];
         try {
-            $result = $this->symfonyUrlMatcher->match($uri);
+            $result = $this->symfonyUrlMatcherDynamic->match($uri);
+            return $result;
+        } catch (\Throwable $t) {
+            return null;
+        }
+    }
+
+    /**
+     * @ParamProviders({"dataProvider"})
+     */
+    public function benchSymfonyCompiled($args)
+    {
+        $uri = $args[1];
+        try {
+            $result = $this->symfonyUrlMatcherCompiled->match($uri);
             return $result;
         } catch (\Throwable $t) {
             return null;

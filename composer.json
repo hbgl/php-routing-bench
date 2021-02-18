@@ -9,7 +9,6 @@
         "phpbench/phpbench": "^0.17.1"
     },
     "scripts": {
-        "bench": "phpbench run bench.php --report=env \"--report=generator:\\\"table\\\",cols:[\\\"subject\\\",\\\"set\\\",\\\"mean\\\",\\\"min\\\",\\\"max\\\",\\\"diff\\\"],sort:{set:\\\"asc\\\",subject:\\\"asc\\\"},break:[\\\"set\\\"]\" --revs=1 --iterations=10 --time-unit=\"milliseconds\"",
-        "benchc": "phpbench run bench_compiled.php --report=env \"--report=generator:\\\"table\\\",cols:[\\\"subject\\\",\\\"set\\\",\\\"mean\\\",\\\"min\\\",\\\"max\\\",\\\"diff\\\"],sort:{set:\\\"asc\\\",subject:\\\"asc\\\"},break:[\\\"set\\\"]\" --revs=1 --iterations=10 --time-unit=\"milliseconds\""
+        "bench": "phpbench run bench.php --report=env \"--report=generator:\\\"table\\\",cols:[\\\"subject\\\",\\\"set\\\",\\\"mean\\\",\\\"min\\\",\\\"max\\\",\\\"diff\\\"],sort:{set:\\\"asc\\\",subject:\\\"asc\\\"},break:[\\\"set\\\"]\" --revs=1 --iterations=10 --time-unit=\"milliseconds\""
     }
 }
