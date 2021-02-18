@@ -2,10 +2,12 @@
 
 This repo contains benchmarks for two PHP routing libraries:
 
-- [Symfony Routing](https://symfony.com/doc/current/routing.html)
-- [FastRoute](https://github.com/nikic/FastRoute)
+- [Symfony Routing](https://symfony.com/doc/current/routing.html) both compiled and dynamic mode
+- [FastRoute](https://github.com/nikic/FastRoute) in group count mode
 
-[Symfony Routing](https://symfony.com/doc/current/routing.html) sequentially matches each route pattern against a URI, whereas [FastRoute](https://github.com/nikic/FastRoute) matches batches of 10 to 30 route patterns against a URI.
+[Symfony Routing](https://symfony.com/doc/current/routing.html) in dynamic mode sequentially matches each route pattern against a URI. In compiled mode it matches static routes via dictionary lookup and dynamic routes with one giant pre-compiled regex.
+
+[FastRoute](https://github.com/nikic/FastRoute) matches batches of 10 to 30 route patterns against a URI.
 
 ## Running the bechmarks
 
